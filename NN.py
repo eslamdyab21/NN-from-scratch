@@ -77,10 +77,13 @@ class Train_Model:
 
     def forward(self, X):
         #forword path
+        layers_num = len(self.model_architecture)
+
         self.model_architecture[0].forward(X)
-        self.model_architecture[1].forward(self.model_architecture[0].activation)
-        self.model_architecture[2].forward(self.model_architecture[1].activation)
-        Y_pred = self.model_architecture[2].activation
+        for layer in range(1,layers_num):
+            self.model_architecture[layer].forward(self.model_architecture[layer-1].activation)
+
+        Y_pred = self.model_architecture[-1].activation
 
         return Y_pred
 
@@ -176,7 +179,7 @@ class Train_Model:
         plt.imshow(image, interpolation='nearest')
         plt.show()
     
-    
+
     def predict_label(self, image):
         prediction = self.make_predictions(image)
         print("Prediction: ", prediction)
