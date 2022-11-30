@@ -1,5 +1,5 @@
 import numpy as np 
-
+from matplotlib import pyplot as plt
 
 
 class Layer_Dense:
@@ -46,7 +46,7 @@ class Layer_Dense:
         return probabilities
 
         
-        
+
 class Train_Model:
     def __init__(self, model_architecture, X, Y, learning_rate=0.1, epochs=100):
         self.model_architecture = model_architecture
@@ -55,7 +55,7 @@ class Train_Model:
         self.learning_rate = learning_rate
         self.epochs = epochs
 
-        self.Train()
+        #self.Train()
 
 
     def Train(self):
@@ -63,23 +63,23 @@ class Train_Model:
         # print(self.model_architecture[0].weights)
 
         for epoch in range(self.epochs):
-            Y_pred = self.forward()
+            Y_pred = self.forward(self.X)
             self.backward(Y_pred)
             self.update_params()
 
             if epoch % 10 == 0:
                 print("epoch: ", epoch)
                 predictions = self.get_predictions(Y_pred)
-                print(self.get_accuracy(predictions, self.Y))
+                print('acc', self.get_accuracy(predictions, self.Y))
+                print('----------------------------------------------')
 
 
 
-    def forward(self):
+    def forward(self, X):
         #forword path
-        self.model_architecture[0].forward(self.X)
+        self.model_architecture[0].forward(X)
         self.model_architecture[1].forward(self.model_architecture[0].activation)
         self.model_architecture[2].forward(self.model_architecture[1].activation)
-        # print(self.model_architecture[1].activation)
         Y_pred = self.model_architecture[2].activation
 
         return Y_pred
@@ -152,12 +152,40 @@ class Train_Model:
         #     print('b', self.model_architecture[layer].db, self.model_architecture[layer].db.shape)
         # print('================================')
 
-    def get_predictions(self, A2):
-        return np.argmax(A2, 0)
+    def get_predictions(self, Aactivation_softmax):
+        return np.argmax(Aactivation_softmax, 0)
+
 
     def get_accuracy(self, predictions, Y):
         print(predictions, Y)
         return np.sum(predictions == Y) / Y.size
+
+
+    def make_predictions(self, X):
+        Aactivation_softmax = self.forward(X)
+        predictions = self.get_predictions(Aactivation_softmax)
+        return predictions
+
+
+    def predict_probability(self, image):
+        prediction = self.forward(image)
+        print("Prediction: ", prediction)
+        
+        image = image.reshape((28, 28)) * 255
+        plt.gray()
+        plt.imshow(image, interpolation='nearest')
+        plt.show()
+    
+    
+    def predict_label(self, image):
+        prediction = self.make_predictions(image)
+        print("Prediction: ", prediction)
+        
+        image = image.reshape((28, 28)) * 255
+        plt.gray()
+        plt.imshow(image, interpolation='nearest')
+        plt.show()
+
 
 
     def one_hot(self, Y):
@@ -170,58 +198,9 @@ class Train_Model:
     def loss_derivative(self, output_activations, y):
         return (output_activations-y)
 
+
     def ReLU_deriv(self, Z):
         return Z > 0
 
     
 
-
-import pandas as pd
-
-
-data = pd.read_csv('train.csv')
-
-data = np.array(data)
-m, n = data.shape
-np.random.shuffle(data) # shuffle before splitting into dev and training sets
-
-data_dev = data[0:1000].T
-Y_dev = data_dev[0]
-X_dev = data_dev[1:n]
-X_dev = X_dev / 255.
-
-data_train = data[1000:m].T
-Y_train = data_train[0]
-X_train = data_train[1:n]
-X_train = X_train / 255.
-_,m_train = X_train.shape
-
-
-model = [Layer_Dense(10,784,'ReLU'),Layer_Dense(20,10,'ReLU'), Layer_Dense(10, 20,'Softmax')]
-Train_Model(model,X_train, Y_train, epochs=200, learning_rate=0.1)
-
-
-'''
-         
- x       
- x             
- .                  o
- .           o      o
- x           o      o
-
- X           h0     h1
-784*41000  10*784  10*10
-              10*41000
-'''
-
-'''     
- x       
- x             
- .                  o        o
- .           o      o        o
- x           o      o        o
-
- X           h0     h1       h2
-784*41000  10*784  10*10    10*10
-              10*41000  10*41000   10*41000
-'''
