@@ -1,32 +1,40 @@
 import numpy as np 
-import nnfs
-from nnfs.datasets import vertical_data
-
-
 
 
 
 class Layer_Dense:
-    def __init__(self, n_inputs, n_neurons, activation_type):
+    def __init__(self, n_neurons, n_inputs, activation_type):
         #intialize the weights randmoly
-        self.weights = 0.10 * np.random.randn(n_inputs, n_neurons)
+        self.weights = 0.10 * np.random.randn(n_neurons, n_inputs)
+        self.dw = 0.10 * np.random.randn(n_neurons, n_inputs)
+
+        
 
         #intialize the biases with zeros
-        self.biases = np.zeros((1, n_neurons))
+        self.biases = np.zeros((n_neurons,1))
+        self.db = np.zeros((n_neurons,1))
+
 
         self.activation_type = activation_type
+        self.activation = None
+
+        # print(self.weights, self.weights.shape)
+        # print(self.dw, self.dw.shape)
+        # print('-----------------------------------------')
 
 
     def forward(self, inputs):
         #forword path
-        self.output = np.dot(inputs, self.weights) + self.biases
+        self.z = np.dot(self.weights, inputs) + self.biases
         
         #activation
         if self.activation_type == 'ReLU':
-            self.output = self.Activation_ReLU(self.output)
+            self.activation = self.Activation_ReLU(self.z)
+            # print('self.zzzzzzz', self.z)
+            # print('self.activation000', self.activation)
 
         elif self.activation_type == 'Softmax':
-            self.output = self.Activation_Softmax(self.output)
+            self.activation = self.Activation_Softmax(self.z)
 
 
     def Activation_ReLU(self,inputs):
@@ -34,68 +42,186 @@ class Layer_Dense:
 
 
     def Activation_Softmax(self,inputs):
-        exp_values = np.exp(inputs - np.max(inputs, axis=1, keepdims=True))
-        probabilities = exp_values / np.sum(exp_values, axis=1, keepdims=True)
+        probabilities = np.exp(inputs) / sum(np.exp(inputs))
         return probabilities
 
         
+        
 class Train_Model:
-    def __init__(self, model_architecture, X, Y, learning_rate=0.001):
+    def __init__(self, model_architecture, X, Y, learning_rate=0.1, epochs=100):
         self.model_architecture = model_architecture
         self.X = X
         self.Y = Y
+        self.learning_rate = learning_rate
+        self.epochs = epochs
 
         self.Train()
 
-    def forward(self):
-        #forword path
-        self.model_architecture[0].forward(X)
-        self.model_architecture[1].forward(self.model_architecture[0].output)
-        print(self.model_architecture[1].output)
-
 
     def Train(self):
-        self.forward()
+        # self.model_architecture[0].weights = self.model_architecture[0].weights*0
+        # print(self.model_architecture[0].weights)
+
+        for epoch in range(self.epochs):
+            Y_pred = self.forward()
+            self.backward(Y_pred)
+            self.update_params()
+
+            if epoch % 10 == 0:
+                print("epoch: ", epoch)
+                predictions = self.get_predictions(Y_pred)
+                print(self.get_accuracy(predictions, self.Y))
 
 
 
-nnfs.init()        
-X, y = vertical_data(samples=10, classes=3)
+    def forward(self):
+        #forword path
+        self.model_architecture[0].forward(self.X)
+        self.model_architecture[1].forward(self.model_architecture[0].activation)
+        self.model_architecture[2].forward(self.model_architecture[1].activation)
+        # print(self.model_architecture[1].activation)
+        Y_pred = self.model_architecture[2].activation
+
+        return Y_pred
+
+
+    def backward(self, Y_pred):
+        m = self.X.shape[1]
+        layers_num = len(self.model_architecture)
+
+        one_hot_Y = self.one_hot(self.Y)
+        A_prev = self.model_architecture[-2].activation
+
+        dZL = self.loss_derivative(Y_pred, one_hot_Y)
+        # print('ypreddddddd', Y_pred[:,0], Y_pred.shape)
+        # print('oneeeeehott', one_hot_Y[:,0], one_hot_Y.shape)
+        # print('DZLLLLLLLLL', dZL[:,0], dZL.shape)
+        dWL = (1 / m) * (dZL.dot(A_prev.T))
+        dbL = (1 / m) * np.sum(dZL)
+        # print('A1', A1)
+        # print('dZL.dot(A1.T)', dZL.dot(A1.T))
+        # print('dwwwwwllll', dWL, dWL.shape)
+        # print('dbblllllll', dbL, dbL.shape)
+
+        self.model_architecture[-1].dw = dWL
+        self.model_architecture[-1].db = dbL
+
+        # print('*************************')
+        # print('dWL' ,dWL.shape)
+        # print('dbL', dbL.shape)
+        # print('self.model_architecture[-1].activation', self.model_architecture[-1].activation.shape)
+
+        dZ_prev = dZL
+        w_prev = self.model_architecture[-1].weights
+        for layer in range(2,layers_num + 1):
+            layer = - layer
+            Z = self.model_architecture[layer].z
+
+            if abs(layer-1) <=  layers_num:
+                A_af = self.model_architecture[layer-1].activation
+            else:
+                A_af = self.X
+
+
+            dZ = w_prev.T.dot(dZ_prev) * self.ReLU_deriv(Z)
+            dW = (1 / m) * (dZ.dot(A_af.T))
+            db = (1 / m) * np.sum(dZ)
+
+            dZ_prev = dZ
+            w_prev = self.model_architecture[layer].weights
+            
+            self.model_architecture[layer].dw = dW
+            self.model_architecture[layer].db = db
+
+            # print('*************************')
+            # print('layer', layer)
+            # print('dW', dW.shape)
+            # print('db', db.shape)
+            # print('self.model_architecture[layer].activation', self.model_architecture[layer].activation.shape)
+
+
+    def update_params(self):
+        layers_num = len(self.model_architecture)
+        for layer in range(layers_num):
+            self.model_architecture[layer].weights = self.model_architecture[layer].weights - self.learning_rate*self.model_architecture[layer].dw
+            self.model_architecture[layer].biases = self.model_architecture[layer].biases - self.learning_rate*self.model_architecture[layer].db
+
+        #     print('*************************')
+        #     print('W',self.model_architecture[layer].dw, self.model_architecture[layer].dw.shape)
+        #     print('*************************')
+        #     print('b', self.model_architecture[layer].db, self.model_architecture[layer].db.shape)
+        # print('================================')
+
+    def get_predictions(self, A2):
+        return np.argmax(A2, 0)
+
+    def get_accuracy(self, predictions, Y):
+        print(predictions, Y)
+        return np.sum(predictions == Y) / Y.size
+
+
+    def one_hot(self, Y):
+        one_hot_Y = np.zeros((Y.size, Y.max() + 1))
+        one_hot_Y[np.arange(Y.size), Y] = 1
+        one_hot_Y = one_hot_Y.T
+        
+        return one_hot_Y
+    
+    def loss_derivative(self, output_activations, y):
+        return (output_activations-y)
+
+    def ReLU_deriv(self, Z):
+        return Z > 0
+
+    
+
+
+import pandas as pd
+
+
+data = pd.read_csv('train.csv')
+
+data = np.array(data)
+m, n = data.shape
+np.random.shuffle(data) # shuffle before splitting into dev and training sets
+
+data_dev = data[0:1000].T
+Y_dev = data_dev[0]
+X_dev = data_dev[1:n]
+X_dev = X_dev / 255.
+
+data_train = data[1000:m].T
+Y_train = data_train[0]
+X_train = data_train[1:n]
+X_train = X_train / 255.
+_,m_train = X_train.shape
+
+
+model = [Layer_Dense(10,784,'ReLU'),Layer_Dense(20,10,'ReLU'), Layer_Dense(10, 20,'Softmax')]
+Train_Model(model,X_train, Y_train, epochs=200, learning_rate=0.1)
+
+
 '''
-[[ 0.17640524  0.51440436]
- [ 0.04001572  0.64542735]
- [ 0.0978738   0.57610375]
- [ 0.22408931  0.5121675 ]
- [ 0.1867558   0.5443863 ]
- [-0.09772779  0.53336746]
- [ 0.09500884  0.6494079 ]
- [-0.01513572  0.47948417]
- [-0.01032189  0.53130674]
- [ 0.04105985  0.41459042]
+         
+ x       
+ x             
+ .                  o
+ .           o      o
+ x           o      o
 
- [ 0.07803437  0.51549476]
- [ 0.3986952   0.5378162 ]
- [ 0.41977698  0.4112214 ]
- [ 0.25911683  0.30192035]
- [ 0.5603088   0.46520877]
- [ 0.18789677  0.5156349 ]
- [ 0.3379092   0.62302905]
- [ 0.31461495  0.620238  ]
- [ 0.48661125  0.46126732]
- [ 0.48026922  0.46976972]
- 
- [ 0.5618114   0.41045335]
- [ 0.5246649   0.53869027]
- [ 0.49603966  0.44891948]
- [ 0.8617442   0.3819368 ]
- [ 0.61570144  0.49718177]
- [ 0.62285924  0.5428332 ]
- [ 0.54138714  0.5066517 ]
- [ 0.7444157   0.5302472 ]
- [ 0.5052769   0.43656778]
- [ 0.64539266  0.4637259 ]]
+ X           h0     h1
+784*41000  10*784  10*10
+              10*41000
 '''
 
+'''     
+ x       
+ x             
+ .                  o        o
+ .           o      o        o
+ x           o      o        o
 
-model = [Layer_Dense(2,3,'ReLU'), Layer_Dense(3, 3,'Softmax')]
-Train_Model(model,X, y)
+ X           h0     h1       h2
+784*41000  10*784  10*10    10*10
+              10*41000  10*41000   10*41000
+'''
