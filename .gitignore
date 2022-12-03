@@ -4,3 +4,6 @@ P6-NN-b.py
 P6-NN-test.py
 P6-NN-v2.py
 train.csv
+Tensorflow/cats_dogs_real_images/kagglecatsanddogs/*
+Tensorflow/cats_dogs_real_images/X.pickle
+Tensorflow/cats_dogs_real_images/y.pickle
