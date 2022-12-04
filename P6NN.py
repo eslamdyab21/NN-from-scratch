@@ -72,11 +72,14 @@ class Train_Model:
 
 
     def forward(self, X):
-        self.model_architecture[0].forward(X)
-        self.model_architecture[1].forward(self.model_architecture[0].activation)
-        self.model_architecture[2].forward(self.model_architecture[1].activation)
+        layers_num = len(self.model_architecture)
 
-        Y_pred = self.model_architecture[2].activation
+        self.model_architecture[0].forward(X)
+        
+        for layer in range(1,layers_num):
+            self.model_architecture[layer].forward(self.model_architecture[layer-1].activation)
+
+        Y_pred = self.model_architecture[-1].activation
 
         return Y_pred
 
