@@ -142,6 +142,13 @@ class Train_Model:
         return Z > 0
 
 
+    def update_params(self):
+        #SGD (Stochastic Gradient Descent)
+        layers_num = len(self.model_architecture)
+        for layer in range(layers_num):
+            self.model_architecture[layer].weights = self.model_architecture[layer].weights - self.learning_rate*self.model_architecture[layer].dw
+            self.model_architecture[layer].biases = self.model_architecture[layer].biases - self.learning_rate*self.model_architecture[layer].db
+
 
 model = [Layer_Dense(10,784,'ReLU'), Layer_Dense(20,10,'ReLU'), Layer_Dense(10, 20,'Softmax')]
 #Train_Model(model,X_train, Y_train, epochs=200, learning_rate=0.1)
