@@ -5,11 +5,11 @@ class Layer_Dense:
     def __init__(self, n_neurons, n_inputs, activation_type):
         #intialize the weights randmoly
         self.weights = 0.10 * np.random.randn(n_neurons, n_inputs)
-        
+        self.dw = 0.10 * np.random.randn(n_neurons, n_inputs)
 
         #intialize the biases with zeros
         self.biases = np.zeros((n_neurons,1))
-
+        self.db = np.zeros((n_neurons,1))
 
         self.activation_type = activation_type
         self.activation = None
@@ -123,7 +123,7 @@ class Train_Model:
             self.model_architecture[layer].dw = dW
             self.model_architecture[layer].db = db
 
-            
+
     
     def one_hot(self, Y):
         one_hot_Y = np.zeros((Y.size, Y.max() + 1))
@@ -137,6 +137,9 @@ class Train_Model:
         #loss of mean squared error
         return (output_activations-y)
 
+
+    def ReLU_deriv(self, Z):
+        return Z > 0
 
 
 
