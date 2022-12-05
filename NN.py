@@ -69,7 +69,7 @@ class Train_Model:
 
             if epoch % 10 == 0:
                 print("epoch: ", epoch)
-                predictions = self.get_predictions(Y_pred)
+                predictions = self.one_hot_decode(Y_pred)
                 print('acc', self.get_accuracy(predictions, self.Y))
                 print('----------------------------------------------')
 
@@ -155,7 +155,7 @@ class Train_Model:
         #     print('b', self.model_architecture[layer].db, self.model_architecture[layer].db.shape)
         # print('================================')
 
-    def get_predictions(self, Aactivation_softmax):
+    def one_hot_decode(self, Aactivation_softmax):
         return np.argmax(Aactivation_softmax, 0)
 
 
@@ -166,7 +166,7 @@ class Train_Model:
 
     def make_predictions(self, X):
         Aactivation_softmax = self.forward(X)
-        predictions = self.get_predictions(Aactivation_softmax)
+        predictions = self.one_hot_decode(Aactivation_softmax)
         return predictions
 
 
