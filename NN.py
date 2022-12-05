@@ -71,6 +71,8 @@ class Train_Model:
                 print("epoch: ", epoch)
                 predictions = self.one_hot_decode(Y_pred)
                 print('acc', self.get_accuracy(predictions, self.Y))
+                loss = self.loss(Y_pred, self.one_hot(self.Y))
+                print('loss', loss)
                 print('----------------------------------------------')
 
 
@@ -200,6 +202,10 @@ class Train_Model:
     
     def loss_derivative(self, output_activations, y):
         return (output_activations-y)
+
+
+    def loss(self, output_activations, y):
+        return np.mean((output_activations-y)**2)
 
 
     def ReLU_deriv(self, Z):

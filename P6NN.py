@@ -66,7 +66,9 @@ class Train_Model:
             if epoch % 10 == 0:
                 print("epoch: ", epoch)
                 predictions = self.one_hot_decode(Y_pred)   #one hot decoding
-                print(self.get_accuracy(predictions, self.Y))
+                print('acc', self.get_accuracy(predictions, self.Y))
+                print('----------------------------------------------')
+                
             
 
 
@@ -136,6 +138,10 @@ class Train_Model:
     def loss_derivative(self, output_activations, y):
         #loss of mean squared error
         return (output_activations-y)
+
+
+    def loss(self, output_activations, y):
+        return np.mean((output_activations-y)**2)
 
 
     def ReLU_deriv(self, Z):
