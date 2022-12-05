@@ -75,7 +75,7 @@ class Train_Model:
         layers_num = len(self.model_architecture)
 
         self.model_architecture[0].forward(X)
-        
+
         for layer in range(1,layers_num):
             self.model_architecture[layer].forward(self.model_architecture[layer-1].activation)
 
@@ -84,7 +84,40 @@ class Train_Model:
         return Y_pred
 
 
+    def backward(self, Y_pred):
+        m = self.X.shape[1]
+        layers_num = len(self.model_architecture)
+
+        #one hot encoding is needed because the Y_pred is a propabilty distribution for each input sample
+        one_hot_Y = self.one_hot(self.Y)
+
+        dZL = self.loss_derivative(Y_pred, one_hot_Y)
+        A_prev = self.model_architecture[-2].activation
+
+        dWL = (1 / m) * (dZL.dot(A_prev.T))
+        dbL = (1 / m) * np.sum(dZL)
+
+        self.model_architecture[-1].dw = dWL
+        self.model_architecture[-1].db = dbL
+
+        dZ_prev = dZL
+        w_prev = self.model_architecture[-1].weights
+        
     
+    def one_hot(self, Y):
+        one_hot_Y = np.zeros((Y.size, Y.max() + 1))
+        one_hot_Y[np.arange(Y.size), Y] = 1
+        one_hot_Y = one_hot_Y.T
+        
+        return one_hot_Y
+    
+
+    def loss_derivative(self, output_activations, y):
+        #loss of mean squared error
+        return (output_activations-y)
+
+
+
 
 model = [Layer_Dense(10,784,'ReLU'), Layer_Dense(20,10,'ReLU'), Layer_Dense(10, 20,'Softmax')]
 #Train_Model(model,X_train, Y_train, epochs=200, learning_rate=0.1)
