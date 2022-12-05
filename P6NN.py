@@ -59,15 +59,15 @@ class Train_Model:
 
         for epoch in range(self.epochs):
             Y_pred = self.forward(self.X)
-            #self.backward(Y_pred)
-            #self.update_params()
+            self.backward(Y_pred)
+            self.update_params()
 
-            '''
+            
             if epoch % 10 == 0:
                 print("epoch: ", epoch)
-                predictions = self.get_predictions(Y_pred)
+                predictions = self.get_predictions(Y_pred)   #one hot decoding
                 print(self.get_accuracy(predictions, self.Y))
-            '''
+            
 
 
 
@@ -148,6 +148,18 @@ class Train_Model:
         for layer in range(layers_num):
             self.model_architecture[layer].weights = self.model_architecture[layer].weights - self.learning_rate*self.model_architecture[layer].dw
             self.model_architecture[layer].biases = self.model_architecture[layer].biases - self.learning_rate*self.model_architecture[layer].db
+
+
+
+    def get_predictions(self, Aactivation_softmax):
+        return np.argmax(Aactivation_softmax, 0)
+
+
+    def get_accuracy(self, predictions, Y):
+        print(predictions, Y)
+        return np.sum(predictions == Y) / Y.size
+
+
 
 
 model = [Layer_Dense(10,784,'ReLU'), Layer_Dense(20,10,'ReLU'), Layer_Dense(10, 20,'Softmax')]
