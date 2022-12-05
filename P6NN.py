@@ -103,6 +103,27 @@ class Train_Model:
         dZ_prev = dZL
         w_prev = self.model_architecture[-1].weights
         
+        for layer in range(2,layers_num + 1):
+            layer = - layer
+            Z = self.model_architecture[layer].z
+
+            if abs(layer-1) <=  layers_num:
+                A_af = self.model_architecture[layer-1].activation
+            else:
+                A_af = self.X
+
+
+            dZ = w_prev.T.dot(dZ_prev) * self.ReLU_deriv(Z)
+            dW = (1 / m) * (dZ.dot(A_af.T))
+            db = (1 / m) * np.sum(dZ)
+
+            dZ_prev = dZ
+            w_prev = self.model_architecture[layer].weights
+            
+            self.model_architecture[layer].dw = dW
+            self.model_architecture[layer].db = db
+
+            
     
     def one_hot(self, Y):
         one_hot_Y = np.zeros((Y.size, Y.max() + 1))
