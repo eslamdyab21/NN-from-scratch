@@ -8,3 +8,7 @@ Tensorflow/cats_dogs_real_images/kagglecatsanddogs_5340/*
 Tensorflow/cats_dogs_real_images/kagglecatsanddogs_5340.zip
 Tensorflow/cats_dogs_real_images/X.pickle
 Tensorflow/cats_dogs_real_images/y.pickle
+__pycache__/*
+Tensorflow/.ipynb_checkpoints/*
+Tensorflow/mnist/.ipynb_checkpoints/*
+Tensorflow/cats_dogs_real_images/.ipynb_checkpoints/*

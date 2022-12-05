@@ -178,7 +178,7 @@ class Train_Model:
         
         image = image.reshape((28, 28)) * 255
         plt.gray()
-        plt.imshow(image, interpolation='nearest')
+        plt.imshow(image)
         plt.show()
     
 
